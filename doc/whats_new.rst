@@ -4,6 +4,49 @@
 Release history
 ===============
 
+.. _changes_0_3:
+
+Changelog
+---------
+
+Bug fixes
+---------
+
+- Fixed a bug in :class:`under_sampling.NearMiss` version 3. The
+  indices returned were wrong. By `Guillaume Lemaitre`_.
+
+New features
+~~~~~~~~~~~~
+
+- Turn off steps in :class:`pipeline.Pipeline` using the `None`
+  object. By `Christos Aridas`_.
+- Add a fetching function `datasets.fetch_datasets` in order to get some
+  imbalanced datasets useful for benchmarking. By `Guillaume Lemaitre`_.
+
+Enhancement
+~~~~~~~~~~~
+
+- All the unit tests have been factorized and a `check_estimators` has
+  been derived from scikit-learn. By `Guillaume Lemaitre`_.
+- Script for automatic build of conda packages and uploading. By
+  `Guillaume Lemaitre`_
+- Remove seaborn dependence and improve the examples. By `Guillaume
+  Lemaitre`_.
+
+API changes summary
+~~~~~~~~~~~~~~~~~~~
+
+- `__init__` has been removed from the :class:`base.SamplerMixin` to
+  create a real mixin class. By `Guillaume Lemaitre`_.
+- creation of a module `exceptions` to handle consistant raising of
+  errors. By `Guillaume Lemaitre`_.
+- creation of a module `utils.validation` to make checking of
+  recurrent patterns. By `Guillaume Lemaitre`_.
+- move the under-sampling methods in `prototype_selection` and
+  `prototype_generation` submodule to make a clearer dinstinction. By
+  `Guillaume Lemaitre`_.
+
+
 .. _changes_0_2:
 
 Version 0.2
@@ -21,9 +64,11 @@ Bug fixes
 - Fixed a bug in :class:`under_sampling.AllKNN`, add stopping criteria to avoid that the minority class become a majority class or that a class disappear. By `Guillaume Lemaitre`_.
 - Fixed a bug in :class:`under_sampling.CondensedNeareastNeigbour`, correction of the list of indices returned. By `Guillaume Lemaitre`_.
 - Fixed a bug in :class:`ensemble.BalanceCascade`, solve the issue to obtain a single array if desired. By `Guillaume Lemaitre`_.
-- Fixed a bug in :class:`pipeline.Pipeline`, solve to embed `Pipeline` in other `Pipeline. By `Christos Aridas`_ .
+- Fixed a bug in :class:`pipeline.Pipeline`, solve to embed `Pipeline` in other `Pipeline`. By `Christos Aridas`_ .
 - Fixed a bug in :class:`pipeline.Pipeline`, solve the issue to put to sampler in the same `Pipeline`. By `Christos Aridas`_ .
 - Fixed a bug in :class:`under_sampling.CondensedNeareastNeigbour`, correction of the shape of `sel_x` when only one sample is selected. By `Aliaksei Halachkin`_.
+- Fixed a bug in :class:`under_sampling.NeighbourhoodCleaningRule`, selecting neighbours instead of minority class misclassified samples. By `Aleksandr Loskutov`_.
+- Fixed a bug in :class:`over_sampling.ADASYN`, correction of the creation of a new sample so that the new sample lies between the minority sample and the nearest neighbour. By `Rafael Wampfler`_.
 
 New features
 ~~~~~~~~~~~~
@@ -38,12 +83,6 @@ Enhancement
 - Validate the type of target in binary samplers. A warning is raised for the moment. By `Guillaume Lemaitre`_ and `Christos Aridas`_.
 - Change from `cross_validation` module to `model_selection` module for
   `sklearn` deprecation cycle. By `Dayvid Oliveira`_ and `Christos Aridas`_.
-
-New features
-~~~~~~~~~~~~
-
-- Added AllKNN under sampling technique.
-- Added support for bumpversion.
 
 API changes summary
 ~~~~~~~~~~~~~~~~~~~
@@ -117,3 +156,5 @@ New methods
 .. _Dayvid Oliveira: https://github.com/dvro
 .. _Francois Magimel: https://github.com/Linkid
 .. _Aliaksei Halachkin: https://github.com/honeyext
+.. _Aleksandr Loskutov: https://github.com/loskutyan
+.. _Rafael Wampfler: https://github.com/Eichhof

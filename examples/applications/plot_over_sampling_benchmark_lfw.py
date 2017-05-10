@@ -1,6 +1,6 @@
 """
 ==========================================================
-Benchmark over-sampling methods in a face regognition task
+Benchmark over-sampling methods in a face recognition task
 ==========================================================
 
 In this face recognition example two faces are used from the LFW
@@ -10,6 +10,10 @@ to examine the improvement of the classifier's output quality
 by using an over-sampler.
 
 """
+
+# Authors: Christos Aridas
+#          Guillaume Lemaitre <g.lemaitre58@gmail.com>
+# License: MIT
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -54,7 +58,6 @@ y = data.target[idxs]
 y[y == majority_person] = 0
 y[y == minority_person] = 1
 
-
 classifier = ['3NN', neighbors.KNeighborsClassifier(3)]
 
 samplers = [
@@ -70,6 +73,8 @@ pipelines = [
     for sampler in samplers
 ]
 
+fig = plt.figure()
+ax = fig.add_subplot(1, 1, 1)
 
 for name, pipeline in pipelines:
     mean_tpr = 0.0
@@ -87,14 +92,22 @@ for name, pipeline in pipelines:
     plt.plot(mean_fpr, mean_tpr, linestyle='--',
              label='{} (area = %0.2f)'.format(name) % mean_auc, lw=LW)
 
-    plt.xlim([-0.05, 1.05])
-    plt.ylim([-0.05, 1.05])
-    plt.xlabel('False Positive Rate')
-    plt.ylabel('True Positive Rate')
-    plt.title('Receiver operating characteristic example')
-    plt.legend(loc="lower right")
-
 plt.plot([0, 1], [0, 1], linestyle='--', lw=LW, color='k',
          label='Luck')
+
+# make nice plotting
+ax.spines['top'].set_visible(False)
+ax.spines['right'].set_visible(False)
+ax.get_xaxis().tick_bottom()
+ax.get_yaxis().tick_left()
+ax.spines['left'].set_position(('outward', 10))
+ax.spines['bottom'].set_position(('outward', 10))
+plt.xlim([0, 1])
+plt.ylim([0, 1])
+plt.xlabel('False Positive Rate')
+plt.ylabel('True Positive Rate')
+plt.title('Receiver operating characteristic example')
+
+plt.legend(loc="lower right")
 
 plt.show()

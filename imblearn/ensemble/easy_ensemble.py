@@ -1,4 +1,9 @@
 """Class to perform under-sampling using easy ensemble."""
+
+# Authors: Guillaume Lemaitre <g.lemaitre58@gmail.com>
+#          Christos Aridas
+# License: MIT
+
 from __future__ import print_function
 
 import numpy as np
@@ -24,7 +29,7 @@ class EasyEnsemble(BaseMulticlassSampler):
         of samples in the minority class over the the number of samples
         in the majority class.
 
-    return_indices : bool, optional (default=True)
+    return_indices : bool, optional (default=False)
         Whether or not to return the indices of the samples randomly
         selected from the majority class.
 

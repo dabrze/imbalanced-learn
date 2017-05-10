@@ -1,14 +1,18 @@
 ﻿"""Class to perform random over-sampling."""
+
+# Authors: Guillaume Lemaitre <g.lemaitre58@gmail.com>
+#          Christos Aridas
+# License: MIT
+
 from __future__ import division, print_function
 
 from collections import Counter
 
 import numpy as np
-from sklearn.neighbors import NearestNeighbors
-from sklearn.neighbors.base import KNeighborsMixin
 from sklearn.utils import check_random_state
 
 from ..base import BaseBinarySampler
+from ..utils import check_neighbors_object
 
 
 class ADASYN(BaseBinarySampler):
@@ -37,7 +41,7 @@ class ADASYN(BaseBinarySampler):
         NOTE: `k` is deprecated from 0.2 and will be replaced in 0.4
         Use ``n_neighbors`` instead.
 
-    n_neighbours : int int or object, optional (default=5)
+    n_neighbors : int int or object, optional (default=5)
         If int, number of nearest neighbours to used to construct
         synthetic samples.
         If object, an estimator that inherits from
@@ -106,18 +110,6 @@ class ADASYN(BaseBinarySampler):
         self.n_neighbors = n_neighbors
         self.n_jobs = n_jobs
 
-    def _validate_estimator(self):
-        """Private function to create the NN estimator"""
-
-        if isinstance(self.n_neighbors, int):
-            self.nn_ = NearestNeighbors(
-                n_neighbors=self.n_neighbors + 1, n_jobs=self.n_jobs)
-        elif isinstance(self.n_neighbors, KNeighborsMixin):
-            self.nn_ = self.n_neighbors
-        else:
-            raise ValueError('`n_neighbors` has to be be either int or a'
-                             ' subclass of KNeighborsMixin.')
-
     def fit(self, X, y):
         """Find the classes statistics before to perform sampling.
 
@@ -137,8 +129,10 @@ class ADASYN(BaseBinarySampler):
         """
 
         super(ADASYN, self).fit(X, y)
-
-        self._validate_estimator()
+        self.nn_ = check_neighbors_object('n_neighbors', self.n_neighbors,
+                                          additional_neighbor=1)
+        # set the number of jobs
+        self.nn_.set_params(**{'n_jobs': self.n_jobs})
 
         return self
 
@@ -217,7 +211,7 @@ class ADASYN(BaseBinarySampler):
             # Create a new sample
             for nn_z in nn_zs:
                 step = random_state.uniform()
-                x_gen = x_i + step * (x_i - X[x_i_nn[nn_z], :])
+                x_gen = x_i + step * (X[x_i_nn[nn_z], :] - x_i)
                 X_resampled = np.vstack((X_resampled, x_gen))
                 y_resampled = np.hstack((y_resampled, self.min_c_))
 

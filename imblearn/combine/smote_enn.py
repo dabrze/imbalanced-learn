@@ -1,4 +1,9 @@
 """Class to perform over-sampling using SMOTE and cleaning using ENN."""
+
+# Authors: Guillaume Lemaitre <g.lemaitre58@gmail.com>
+#          Christos Aridas
+# License: MIT
+
 from __future__ import division, print_function
 
 import warnings
@@ -202,7 +207,8 @@ class SMOTEENN(BaseBinarySampler):
             if isinstance(self.smote, SMOTE):
                 self.smote_ = self.smote
             else:
-                raise ValueError('smote needs to be a SMOTE object.')
+                raise ValueError('smote needs to be a SMOTE object.'
+                                 'Got {} instead.'.format(type(self.smote)))
         # Otherwise create a default SMOTE
         else:
             self.smote_ = SMOTE(
@@ -234,7 +240,8 @@ class SMOTEENN(BaseBinarySampler):
             if isinstance(self.enn, EditedNearestNeighbours):
                 self.enn_ = self.enn
             else:
-                raise ValueError('enn needs to be an EditedNearestNeighbours.')
+                raise ValueError('enn needs to be an EditedNearestNeighbours.'
+                                 ' Got {} instead.'.format(type(self.enn)))
         # Otherwise create a default EditedNearestNeighbours
         else:
             self.enn_ = EditedNearestNeighbours(random_state=self.random_state)

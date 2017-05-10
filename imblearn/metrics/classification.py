@@ -8,6 +8,10 @@ Function named as ``*_error`` or ``*_loss`` return a scalar value to minimize:
 the lower the better
 """
 
+# Authors: Guillaume Lemaitre <g.lemaitre58@gmail.com>
+#          Dariusz Brzezinski
+# License: MIT
+
 from __future__ import division
 
 import warnings
@@ -473,7 +477,7 @@ def geometric_mean_score(y_true,
     and specificity. For multi-class problems it is a higher root of the
     product of sensitivity for each class.
 
-    For compatibility with other imbalance performance measures, G-mean can
+    For compatibility with other imbalance performance measures, G-mean can be
     calculated for each class separately on a one-vs-rest basis when
     ``average != 'multiclass'``.
 
@@ -635,6 +639,10 @@ def make_index_balanced_accuracy(alpha=0.1, squared=True):
     index balanced accuracy (IBA). You need to use this function to
     decorate any scoring function.
 
+    Only metrics requiring ``y_pred`` can be corrected with the index
+    balanced accuracy. ``y_score`` cannot be used since the dominance
+    cannot be computed.
+
     Parameters
     ----------
     alpha : float, optional (default=0.1)
@@ -664,24 +672,46 @@ def make_index_balanced_accuracy(alpha=0.1, squared=True):
     def decorate(scoring_func):
         @functools.wraps(scoring_func)
         def compute_score(*args, **kwargs):
+            # Create the list of tags
+            tags_scoring_func = getcallargs(scoring_func, *args, **kwargs)
+            # check that the scoring function does not need a score
+            # and only a prediction
+            if ('y_score' in tags_scoring_func or
+                'y_prob' in tags_scoring_func or
+                    'y2' in tags_scoring_func):
+                raise AttributeError('The function {} has an unsupported'
+                                     ' attribute. Metric with`y_pred` are the'
+                                     ' only supported metrics is the only'
+                                     ' supported.')
             # Compute the score from the scoring function
             _score = scoring_func(*args, **kwargs)
             # Square if desired
             if squared:
                 _score = np.power(_score, 2)
-            # Create the list of tags
-            tags_scoring_func = getcallargs(scoring_func, *args, **kwargs)
             # Get the signature of the sens/spec function
             sens_spec_sig = signature(sensitivity_specificity_support)
-            # Filter the inputs required by the sens/spec function
-            if scoring_func != geometric_mean_score:
-                tags_sens_spec = sens_spec_sig.bind(**tags_scoring_func)
-            else:
-                # Adapt the parameters to sens/spec function
-                del tags_scoring_func['correction']
-                if "average" not in kwargs:
-                    tags_scoring_func['average'] = 'binary'
-                tags_sens_spec = sens_spec_sig.bind(**tags_scoring_func)
+            # We need to extract from kwargs only the one needed by the
+            # specificity and specificity
+            params_sens_spec = set(sens_spec_sig._parameters.keys())
+            # Make the intersection between the parameters
+            sel_params = params_sens_spec.intersection(
+                set(tags_scoring_func))
+            # Create a sub dictionary
+            tags_scoring_func = dict((k, tags_scoring_func[k])
+                                     for k in sel_params)
+            # Check if the metric is the geometric mean
+            if scoring_func.__name__ == 'geometric_mean_score':
+                if 'average' in tags_scoring_func:
+                    if tags_scoring_func['average'] == 'multiclass':
+                        tags_scoring_func['average'] = 'macro'
+            # We do not support multilabel so the only average supported
+            # is binary
+            elif (scoring_func.__name__ == 'accuracy_score' or
+                  scoring_func.__name__ == 'jaccard_similarity_score'):
+                tags_scoring_func['average'] = 'binary'
+            # Create the list of parameters through signature binding
+            tags_sens_spec = sens_spec_sig.bind(
+                **tags_scoring_func)
             # Call the sens/spec function
             sen, spe, _ = sensitivity_specificity_support(
                 *tags_sens_spec.args,

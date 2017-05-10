@@ -1,5 +1,10 @@
 """Class to perform over-sampling using SMOTE and cleaning using Tomek
 links."""
+
+# Authors: Guillaume Lemaitre <g.lemaitre58@gmail.com>
+#          Christos Aridas
+# License: MIT
+
 from __future__ import division, print_function
 
 import warnings
@@ -173,7 +178,8 @@ class SMOTETomek(BaseBinarySampler):
             if isinstance(self.smote, SMOTE):
                 self.smote_ = self.smote
             else:
-                raise ValueError('smote needs to be a SMOTE object.')
+                raise ValueError('smote needs to be a SMOTE object.'
+                                 'Got {} instead.'.format(type(self.smote)))
         # Otherwise create a default SMOTE
         else:
             self.smote_ = SMOTE(
@@ -192,8 +198,9 @@ class SMOTETomek(BaseBinarySampler):
             if isinstance(self.tomek, TomekLinks):
                 self.tomek_ = self.tomek
             else:
-                raise ValueError('tomek needs to be a TomekLinks object.')
-        # Otherwise create a default EditedNearestNeighbours
+                raise ValueError('tomek needs to be a TomekLinks object.'
+                                 'Got {} instead.'.format(type(self.tomek)))
+        # Otherwise create a default TomekLinks
         else:
             self.tomek_ = TomekLinks(random_state=self.random_state)
 

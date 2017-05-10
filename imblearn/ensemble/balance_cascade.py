@@ -1,4 +1,9 @@
 """Class to perform under-sampling using balace cascade."""
+
+# Authors: Guillaume Lemaitre <g.lemaitre58@gmail.com>
+#          Christos Aridas
+# License: MIT
+
 from __future__ import print_function
 
 import warnings
@@ -179,7 +184,8 @@ class BalanceCascade(BaseBinarySampler):
             else:
                 raise NotImplementedError
         else:
-            raise ValueError('Invalid parameter `estimator`')
+            raise ValueError('Invalid parameter `estimator`. Got {}.'.format(
+                type(self.estimator)))
 
         self.logger.debug(self.estimator_)
 

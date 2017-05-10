@@ -1,5 +1,11 @@
 """Transform a dataset into an imbalanced dataset."""
 
+
+# Authors: Dayvid Oliveira
+#          Guillaume Lemaitre <g.lemaitre58@gmail.com>
+#          Christos Aridas
+# License: MIT
+
 import logging
 from collections import Counter
 
@@ -48,11 +54,14 @@ def make_imbalance(X, y, ratio, min_c_=None, random_state=None):
     """
     if isinstance(ratio, float):
         if ratio > 1:
-            raise ValueError('Ration cannot be greater than one.')
+            raise ValueError('Ratio cannot be greater than one.'
+                             ' Got {}.'.format(ratio))
         elif ratio <= 0:
-            raise ValueError('Ratio cannot be negative.')
+            raise ValueError('Ratio have to be strictly positive.'
+                             ' Got {}.'.format(ratio))
     else:
-        raise ValueError('Ratio must be a float between 0.0 < ratio < 1.0')
+        raise ValueError('Ratio must be a float between 0.0 < ratio < 1.0'
+                         ' Got {} instead.'.format(ratio))
 
     X, y = check_X_y(X, y)
 
@@ -69,9 +78,11 @@ def make_imbalance(X, y, ratio, min_c_=None, random_state=None):
     n_min_samples = int(np.count_nonzero(y != min_c_) * ratio)
     if n_min_samples > stats_c_[min_c_]:
         raise ValueError('Current imbalance ratio of data is lower than'
-                         ' desired ratio!')
+                         ' desired ratio! Got {} > {}.'.format(
+                             n_min_samples, stats_c_[min_c_]))
     if n_min_samples == 0:
-        raise ValueError('Not enough samples for desired ratio!')
+        raise ValueError('Not enough samples for desired ratio!'
+                         ' Got {}.'.format(n_min_samples))
 
     mask = y == min_c_
 

@@ -1,13 +1,19 @@
 ﻿"""Class to perform over-sampling using SMOTE."""
+
+# Authors: Guillaume Lemaitre <g.lemaitre58@gmail.com>
+#          Fernando Nogueira
+#          Christos Aridas
+# License: MIT
+
 from __future__ import division, print_function
 
 import numpy as np
-from sklearn.neighbors import NearestNeighbors
-from sklearn.neighbors.base import KNeighborsMixin
 from sklearn.svm import SVC
 from sklearn.utils import check_array, check_random_state
 
 from ..base import BaseBinarySampler
+from ..utils import check_neighbors_object
+from ..exceptions import raise_isinstance_error
 
 SMOTE_KIND = ('regular', 'borderline1', 'borderline2', 'svm')
 
@@ -48,20 +54,21 @@ class SMOTE(BaseBinarySampler):
 
     m : int, optional (default=None)
         Number of nearest neighbours to use to determine if a minority sample
-        is in danger.
+        is in danger. Used with kind={'borderline1', 'borderline2', 'svm'}.
 
         NOTE: `m` is deprecated from 0.2 and will be replaced in 0.4
         Use ``m_neighbors`` instead.
 
     m_neighbors : int int or object, optional (default=10)
         If int, number of nearest neighbours to use to determine if a minority
-        sample is in danger.
+        sample is in danger. Used with kind={'borderline1', 'borderline2',
+        'svm'}.
         If object, an estimator that inherits from
         `sklearn.neighbors.base.KNeighborsMixin` that will be used to find
         the k_neighbors.
 
     out_step : float, optional (default=0.5)
-        Step size when extrapolating.
+        Step size when extrapolating. Used with kind='svm'.
 
     kind : str, optional (default='regular')
         The type of SMOTE algorithm to use one of the following options:
@@ -288,14 +295,12 @@ class SMOTE(BaseBinarySampler):
             # Regular smote does not look for samples in danger, instead it
             # creates synthetic samples directly from the k-th nearest
             # neighbours with not filtering
-            if isinstance(self.k_neighbors, int):
-                self.nn_k_ = NearestNeighbors(
-                    n_neighbors=self.k_neighbors + 1, n_jobs=self.n_jobs)
-            elif isinstance(self.k_neighbors, KNeighborsMixin):
-                self.nn_k_ = self.k_neighbors
-            else:
-                raise ValueError('`n_neighbors` has to be be either int or a'
-                                 ' subclass of KNeighborsMixin.')
+            self.nn_k_ = check_neighbors_object('k_neighbors',
+                                                self.k_neighbors,
+                                                additional_neighbor=1)
+            # set the number of jobs
+            self.nn_k_.set_params(**{'n_jobs': self.n_jobs})
+
         else:
             # Borderline1, 2 and SVM variations of smote must first look for
             # samples that could be considered noise and samples that live
@@ -303,23 +308,17 @@ class SMOTE(BaseBinarySampler):
             # creating synthetic samples from the k-th nns, it first look
             # for m nearest neighbors to decide whether or not a sample is
             # noise or near the boundary.
-            if isinstance(self.k_neighbors, int):
-                self.nn_k_ = NearestNeighbors(
-                    n_neighbors=self.k_neighbors + 1, n_jobs=self.n_jobs)
-            elif isinstance(self.k_neighbors, KNeighborsMixin):
-                self.nn_k_ = self.k_neighbors
-            else:
-                raise ValueError('`n_neighbors` has to be be either int or a'
-                                 ' subclass of KNeighborsMixin.')
+            self.nn_k_ = check_neighbors_object('k_neighbors',
+                                                self.k_neighbors,
+                                                additional_neighbor=1)
+            # set the number of jobs
+            self.nn_k_.set_params(**{'n_jobs': self.n_jobs})
 
-            if isinstance(self.m_neighbors, int):
-                self.nn_m_ = NearestNeighbors(
-                    n_neighbors=self.m_neighbors + 1, n_jobs=self.n_jobs)
-            elif isinstance(self.m_neighbors, KNeighborsMixin):
-                self.nn_m_ = self.m_neighbors
-            else:
-                raise ValueError('`n_neighbors` has to be be either int or a'
-                                 ' subclass of KNeighborsMixin.')
+            self.nn_m_ = check_neighbors_object('m_neighbors',
+                                                self.m_neighbors,
+                                                additional_neighbor=1)
+            # set the number of jobs
+            self.nn_m_.set_params(**{'n_jobs': self.n_jobs})
 
         # --- SVM smote
         # Unlike the borderline variations, the SVM variation uses the support
@@ -335,7 +334,8 @@ class SMOTE(BaseBinarySampler):
             elif isinstance(self.svm_estimator, SVC):
                 self.svm_estimator_ = self.svm_estimator
             else:
-                raise ValueError('`svm_estimator` has to be an SVC object')
+                raise_isinstance_error('svm_estimator', [SVC],
+                                       self.svm_estimator)
 
     def fit(self, X, y):
         """Find the classes statistics before to perform sampling.
@@ -383,7 +383,9 @@ class SMOTE(BaseBinarySampler):
         """
 
         if self.kind not in SMOTE_KIND:
-            raise ValueError('Unknown kind for SMOTE algorithm.')
+            raise ValueError('Unknown kind for SMOTE algorithm.'
+                             ' Choices are {}. Got {} instead.'.format(
+                                 SMOTE_KIND, self.kind))
 
         random_state = check_random_state(self.random_state)
 
